@@ -7,7 +7,7 @@ tasks:
       - task: install-lazygit
       - task: install-neovim
       - task: install-lazyvim
-      - task: install-php-tools
+      - bash install-php-tools.sh
       - task: configure
 
   install-deps:
@@ -71,42 +71,57 @@ tasks:
         EOF
     status:
       - grep -q 'neovide_input_ime' ~/.config/nvim/lua/config/options.lua
+
   install-php-tools:
-    desc: "Configure PHP namespace and LSP tools"
+    desc: "Hard-fix Phpactor with bridge scripts"
     cmds:
+      # 建立橋接腳本，直接在生成時展開 DBX_PATH 避開執行期路徑問題
+      - mkdir -p ~/.local/bin
+      - |
+        DBX_PATH=$(which distrobox)
+        printf "#!/bin/bash\nexport DBX_CONTAINER_MANAGER=docker\n$DBX_PATH enter php-dev -- php \"\$@\"" > ~/.local/bin/php
+        printf "#!/bin/bash\nexport DBX_CONTAINER_MANAGER=docker\n$DBX_PATH enter php-dev -- composer \"\$@\"" > ~/.local/bin/composer
+        chmod +x ~/.local/bin/php ~/.local/bin/composer
+      # 寫入 Neovim 插件配置
       - mkdir -p ~/.config/nvim/lua/plugins
       - |
         cat > ~/.config/nvim/lua/plugins/php.lua << 'EOF'
         return {
-          -- PHP Namespace 插件
           {
-            "ccaglak/php-namespace.nvim",
-            dependencies = { "ccaglak/filer.nvim" },
+            "phpactor/phpactor",
+            build = "DBX_CONTAINER_MANAGER=docker " .. vim.fn.expand("$HOME") .. "/.local/bin/composer install --no-dev -o",
+            ft = "php",
             config = function()
-              local phpns = require("php-namespace")
-              phpns.setup()
-              
-              -- 設定快捷鍵
-              vim.keymap.set("n", "<Leader>pu", phpns.insert_usage, { desc = "PHP Insert Usage" })
-              vim.keymap.set("n", "<Leader>pn", phpns.insert_namespace, { desc = "PHP Insert Namespace" })
+              vim.g.phpactor_php_bin = vim.fn.expand("$HOME") .. "/.local/bin/php"
+              if pcall(require, "notify") then
+                require("notify").setup({ timeout = 3000 })
+              end
+              vim.api.nvim_create_autocmd("FileType", {
+                pattern = "php",
+                callback = function()
+                  local opts = { buffer = true, silent = true }
+                  vim.keymap.set("n", "<leader>cu", "<cmd>PhpactorImportClass<cr>", { desc = "PHP Import Class", buffer = true })
+                  vim.keymap.set("n", "<leader>cn", "<cmd>PhpactorContextMenu<cr>", { desc = "Phpactor Menu", buffer = true })
+                end,
+              })
             end,
           },
-          -- 確保 LazyVim 啟用了 PHP 的 LSP 支援
           {
-            "neovim/nvim-lspconfig",
+            "akinsho/bufferline.nvim",
             opts = {
-              servers = {
-                phpactor = {}, -- 推薦 phpactor 處理重構
+              options = {
+                custom_filter = function(buf)
+                  return vim.bo[buf].buftype ~= "terminal"
+                end,
               },
             },
           },
         }
-        EOF
-    status:
-      - test -f ~/.config/nvim/lua/plugins/php.lua
+        EOF 
   clean:
     desc: "Reset all Neovim config"
     prompt: "This will delete all Neovim config. Are you sure?"
     cmds:
       - rm -rf ~/.config/nvim ~/.local/share/nvim ~/.local/state/nvim ~/.cache/nvim
       - echo "Cleared all config"
+
