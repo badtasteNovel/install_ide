@@ -7,6 +7,7 @@ tasks:
       - task: install-lazygit
       - task: install-neovim
       - task: install-lazyvim
+      - task: install-php-tools
       - task: configure
 
   install-deps:
@@ -70,7 +71,39 @@ tasks:
         EOF
     status:
       - grep -q 'neovide_input_ime' ~/.config/nvim/lua/config/options.lua
-
+  install-php-tools:
+    desc: "Configure PHP namespace and LSP tools"
+    cmds:
+      - mkdir -p ~/.config/nvim/lua/plugins
+      - |
+        cat > ~/.config/nvim/lua/plugins/php.lua << 'EOF'
+        return {
+          -- PHP Namespace 插件
+          {
+            "ccaglak/php-namespace.nvim",
+            dependencies = { "ccaglak/filer.nvim" },
+            config = function()
+              local phpns = require("php-namespace")
+              phpns.setup()
+              
+              -- 設定快捷鍵
+              vim.keymap.set("n", "<Leader>pu", phpns.insert_usage, { desc = "PHP Insert Usage" })
+              vim.keymap.set("n", "<Leader>pn", phpns.insert_namespace, { desc = "PHP Insert Namespace" })
+            end,
+          },
+          -- 確保 LazyVim 啟用了 PHP 的 LSP 支援
+          {
+            "neovim/nvim-lspconfig",
+            opts = {
+              servers = {
+                phpactor = {}, -- 推薦 phpactor 處理重構
+              },
+            },
+          },
+        }
+        EOF
+    status:
+      - test -f ~/.config/nvim/lua/plugins/php.lua
   clean:
     desc: "Reset all Neovim config"
     prompt: "This will delete all Neovim config. Are you sure?"

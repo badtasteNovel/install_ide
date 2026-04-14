@@ -19,3 +19,7 @@ ctrl+\ (hold ctrl) ctrl+n
 ```
 alias nv='"/mnt/c/Program Files/Neovide/neovide.exe" --wsl --neovim-bin /usr/local/bin/nvim'
 ```
+# 安裝php-actor
+```
+:MasonInstall phpactor
+```
