@@ -1,6 +1,7 @@
 
 ```
 sudo chown -R $USER:$USER .
+```
 # git persistent
 ```
 git config --global credential.helper store
