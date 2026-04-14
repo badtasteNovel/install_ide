@@ -4,6 +4,7 @@ tasks:
     desc: "Install Neovim + LazyVim"
     cmds:
       - task: install-deps
+      - task: install-lazygit
       - task: install-neovim
       - task: install-lazyvim
       - task: configure
@@ -17,6 +18,18 @@ tasks:
       - which git
       - which curl
       - which rg
+
+  install-lazygit:
+    desc: "Install lazygit"
+    cmds:
+      - |
+        LAZYGIT_VERSION=$(curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep tag_name | cut -d '"' -f 4 | cut -c 2-)
+        wget -q "https://github.com/jesseduffield/lazygit/releases/download/v${LAZYGIT_VERSION}/lazygit_${LAZYGIT_VERSION}_Linux_x86_64.tar.gz" -O /tmp/lazygit.tar.gz
+        tar -xzf /tmp/lazygit.tar.gz -C /tmp/
+        sudo mv /tmp/lazygit /usr/local/bin/
+        echo "lazygit installed $(lazygit --version)"
+    status:
+      - which lazygit
 
   install-neovim:
     desc: "Install latest Neovim"
