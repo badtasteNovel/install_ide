@@ -1,35 +1,22 @@
 version: '3'
 tasks:
   default:
-    desc: "Install all packages"
+    desc: "Install Neovim + LazyVim"
     cmds:
       - task: install-deps
-      - task: install-fonts
       - task: install-neovim
       - task: install-lazyvim
-      - task: install-neovide
-      - task: configure-ime
+      - task: configure
 
   install-deps:
     desc: "Install required dependencies"
     cmds:
       - sudo apt-get update -y
-      - sudo apt-get install -y curl git wget unzip ripgrep fd-find xclip fontconfig
+      - sudo apt-get install -y curl git wget unzip ripgrep fd-find xclip
     status:
       - which git
       - which curl
       - which rg
-
-  install-fonts:
-    desc: "Install JetBrains Nerd Font + CJK fonts"
-    cmds:
-      - mkdir -p ~/.local/share/fonts
-      - wget -q https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip -O /tmp/JetBrainsMono.zip
-      - unzip -o /tmp/JetBrainsMono.zip -d ~/.local/share/fonts/JetBrainsMono/
-      - sudo apt-get install -y fonts-noto-cjk fonts-noto-cjk-extra
-      - fc-cache -fv
-    status:
-      - test -f ~/.local/share/fonts/JetBrainsMono/JetBrainsMonoNerdFont-Regular.ttf
 
   install-neovim:
     desc: "Install latest Neovim"
@@ -45,99 +32,34 @@ tasks:
     desc: "Install LazyVim"
     cmds:
       - |
-        [ -d ~/.config/nvim ] && mv ~/.config/nvim ~/.config/nvim.bak.$(date +%s) && echo "Old config backed up"
+        [ -d ~/.config/nvim ] && mv ~/.config/nvim ~/.config/nvim.bak.$(date +%s)
         [ -d ~/.local/share/nvim ] && mv ~/.local/share/nvim ~/.local/share/nvim.bak.$(date +%s)
         git clone https://github.com/LazyVim/starter ~/.config/nvim
         rm -rf ~/.config/nvim/.git
-        echo "LazyVim installed"
     status:
       - test -f ~/.config/nvim/init.lua
 
-  install-neovide:
-    desc: "Install Neovide"
+  configure:
+    desc: "Configure encoding and IME"
     cmds:
+      - mkdir -p ~/.config/nvim/lua/config
       - |
-        LATEST=$(curl -s https://api.github.com/repos/neovide/neovide/releases/latest | grep tag_name | cut -d '"' -f 4)
-        wget -q "https://github.com/neovide/neovide/releases/download/${LATEST}/neovide-linux-x86_64.tar" -O /tmp/neovide.tar
-        sudo tar -xf /tmp/neovide.tar -C /usr/local/bin/
-        sudo chmod +x /usr/local/bin/neovide
-        echo "Neovide installed $(neovide --version)"
-      - |
-        grep -q 'LIBGL_ALWAYS_SOFTWARE' ~/.bashrc || echo 'export LIBGL_ALWAYS_SOFTWARE=1' >> ~/.bashrc
-        echo "Run 'source ~/.bashrc' then 'neovide' to launch"
-    status:
-      - which neovide
-
-  configure-ime:
-    desc: "Configure Chinese IME support for Neovide"
-    cmds:
-      - |
-        # 安裝 fcitx5 + 中文輸入法
-        sudo apt-get install -y \
-          fcitx5 \
-          fcitx5-chinese-addons \
-          fcitx5-frontend-gtk3 \
-          fcitx5-config-qt
-      - |
-        # 設定 fcitx5 環境變數
-        cat >> ~/.bashrc << 'EOF'
-
-        # fcitx5 IME for Neovide Chinese input
-        export GTK_IM_MODULE=fcitx
-        export QT_IM_MODULE=fcitx
-        export XMODIFIERS=@im=fcitx
-        export INPUT_METHOD=fcitx
-        export GLFW_IM_MODULE=ibus
-        export LANG=zh_TW.UTF-8
-        export LC_ALL=zh_TW.UTF-8
-        EOF
-      - |
-        # 設定 locale
-        sudo locale-gen zh_TW.UTF-8
-        sudo update-locale LANG=zh_TW.UTF-8
-      - |
-        # 寫入 Neovim 中文輸入設定
-        mkdir -p ~/.config/nvim/lua/config
         cat >> ~/.config/nvim/lua/config/options.lua << 'EOF'
+
+        -- 基本編碼設定
+        vim.o.encoding = "utf-8"
+        vim.o.fileencoding = "utf-8"
 
         -- Neovide 中文輸入支援
         if vim.g.neovide then
           vim.g.neovide_input_ime = true
-          vim.g.neovide_input_macos_alt_is_meta = false
         end
-        vim.o.encoding = "utf-8"
-        vim.o.fileencoding = "utf-8"
         EOF
-      - |
-        # 建立 neovide 啟動腳本（帶入正確環境）
-        sudo tee /usr/local/bin/neovide-cn << 'EOF'
-        #!/bin/bash
-        export LANG=zh_TW.UTF-8
-        export LC_ALL=zh_TW.UTF-8
-        export GTK_IM_MODULE=fcitx
-        export QT_IM_MODULE=fcitx
-        export XMODIFIERS=@im=fcitx
-        export GLFW_IM_MODULE=ibus
-        export LIBGL_ALWAYS_SOFTWARE=1
-        fcitx5 -d --replace 2>/dev/null &
-        sleep 1
-        exec neovide "$@"
-        EOF
-        sudo chmod +x /usr/local/bin/neovide-cn
-        echo "Done! Use 'neovide-cn' to launch Neovide with Chinese input"
     status:
-      #- which fcitx5
-      #- grep -q 'neovide_input_ime' ~/.config/nvim/lua/config/options.lua
-
-  update:
-    desc: "Update Neovim and Neovide"
-    cmds:
-      - task: install-neovim
-      - task: install-neovide
-      - echo "Update complete"
+      - grep -q 'neovide_input_ime' ~/.config/nvim/lua/config/options.lua
 
   clean:
-    desc: "Reset Neovim / LazyVim config"
+    desc: "Reset all Neovim config"
     prompt: "This will delete all Neovim config. Are you sure?"
     cmds:
       - rm -rf ~/.config/nvim ~/.local/share/nvim ~/.local/state/nvim ~/.cache/nvim

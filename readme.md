@@ -14,3 +14,8 @@ bash ./install-task.sh
 ```
 ctrl+\ (hold ctrl) ctrl+n
 ```
+# 安裝 nevoide msi 版本(msi: microsoft installer)
+# bashrc alias 
+```
+alias nv='"/mnt/c/Program Files/Neovide/neovide.exe" --wsl --neovim-bin /usr/local/bin/nvim'
+```
