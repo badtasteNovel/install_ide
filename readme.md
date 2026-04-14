@@ -1,5 +1,10 @@
 ```
 sudo chown -R $USER:$USER .
+# git persistent
+```
+git config --global credential.helper store
+```
+```
 ```
 # 安裝task
 ```
