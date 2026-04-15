@@ -16,31 +16,50 @@ mkdir -p "$PHP_DIR"
 # 3. 從變數指定的 Image 提取 PHP
 echo "正在從 $PHP_IMAGE 提取 PHP..."
 
-# 建立暫時容器並複製
 docker create --name ryan-php-extractor "$PHP_IMAGE"
 docker cp ryan-php-extractor:"$PHP_INTERNAL_PATH" "$PHP_DIR/php84"
+docker cp ryan-php-extractor:/usr/lib/php "$PHP_DIR/extensions"
+docker cp ryan-php-extractor:/usr/local/etc/php "$PHP_DIR/etc"
 docker rm -f ryan-php-extractor
-
-# 賦予執行權限
 chmod +x "$PHP_DIR/php84"
 
-# 驗證
-"$PHP_DIR/php84" -v && echo "PHP 提取成功！"
+echo "正在從 composer:latest 提取 Composer..."
+docker create --name ryan-composer-extractor "composer:latest"
+docker cp ryan-composer-extractor:/usr/bin/composer "$PHP_DIR/composer"
+docker rm -f ryan-composer-extractor
+chmod +x "$PHP_DIR/composer"
+
+"$PHP_DIR/php84" -v && "$PHP_DIR/composer" -v && echo "PHP 與 Composer 提取成功！"
 
 # 4. 寫入 Neovim 插件配置
 mkdir -p ~/.config/nvim/lua/plugins
 cat >~/.config/nvim/lua/plugins/php.lua <<'EOF'
-local ryan_php = "/home/ryan/.local/share/php-bin/php84"
+local php_bin_root = "/home/ryan/.local/share/php-bin"
+local ryan_php = php_bin_root .. "/php84"
+
+-- 在任何插件載入前就先設好 PATH，確保 phpactor 啟動時能找到 php 和 composer
+vim.env.PATH = php_bin_root .. ":" .. vim.env.PATH
 
 return {
   {
     "phpactor/phpactor",
-    -- 強制使用提取出來的 PHP 進行編譯
-    build = ryan_php .. " " .. vim.fn.expand("$HOME") .. "/.local/share/nvim/lazy/phpactor/bin/phpactor install",
     ft = "php",
+    build = function(plugin)
+      local cmd = string.format(
+        "ln -sf %s %s/php && export PATH=%s:$PATH && %s install --no-dev --optimize-autoloader",
+        ryan_php,
+        php_bin_root,
+        php_bin_root,
+        php_bin_root .. "/composer"
+      )
+
+      print("正在從私有路徑構建 Phpactor...")
+      local output = vim.fn.system(cmd, plugin.dir)
+      print(output)
+    end,
     config = function()
       vim.g.phpactor_php_bin = ryan_php
-      
+
       -- [需求] 通知 3 秒後自動消失
       local status, notify = pcall(require, "notify")
       if status then
@@ -53,7 +72,6 @@ return {
       vim.api.nvim_create_autocmd("FileType", {
         pattern = "php",
         callback = function()
-          local opts = { buffer = true, silent = true }
           vim.keymap.set("n", "<leader>cu", "<cmd>PhpactorImportClass<cr>", { desc = "PHP Import Class", buffer = true })
           vim.keymap.set("n", "<leader>cn", "<cmd>PhpactorContextMenu<cr>", { desc = "Phpactor Menu", buffer = true })
         end,
@@ -65,6 +83,7 @@ return {
     opts = {
       options = {
         custom_filter = function(buf)
+          -- 過濾掉 terminal 視窗
           return vim.bo[buf].buftype ~= "terminal"
         end,
       },
@@ -73,4 +92,5 @@ return {
 }
 EOF
 
+echo "--------------------------------------------------"
 echo "配置已更新。請在 Neovim 執行 :Lazy build phpactor"

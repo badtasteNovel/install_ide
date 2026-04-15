@@ -24,3 +24,5 @@ alias nv='"/mnt/c/Program Files/Neovide/neovide.exe" --wsl --neovim-bin /usr/loc
 :MasonInstall phpactor
 ```
 # env 非敏感資訊
+
+# 執行Lazy install phpactor 再執行 Lazy build phpactor
