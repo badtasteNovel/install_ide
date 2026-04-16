@@ -10,7 +10,6 @@ else
 fi
 
 # 定義私有存放路徑
-PHP_DIR="/home/ryan/.local/share/php-bin"
 mkdir -p "$PHP_DIR"
 
 # 強制指定正確的 conf.d 路徑 (改成 8.4)
@@ -50,37 +49,3 @@ ln -sf /usr/bin/composer "$PHP_DIR/composer"
 "$PHP_DIR/composer" -V
 
 # Neovim Phpactor 配置
-mkdir -p ~/.config/nvim/lua/plugins
-cat >~/.config/nvim/lua/plugins/php.lua <<'EOF'
-local php_bin_root = "/home/ryan/.local/share/php-bin"
-local ryan_php = php_bin_root .. "/php"
-
--- 使用系統的 conf.d 來載入 apt 安裝的 extensions
-vim.env.PATH = php_bin_root .. ":" .. vim.env.PATH
-vim.env.PHP_INI_SCAN_DIR = "/etc/php/8.4/cli/conf.d"
-
-return {
-  {
-    "phpactor/phpactor",
-    ft = "php",
-    build = function(plugin)
-      local cmd = string.format(
-        "export PATH=%s:$PATH && %s install --no-dev --optimize-autoloader",
-        php_bin_root,
-        php_bin_root .. "/composer"
-      )
-      vim.fn.system(cmd, plugin.dir)
-    end,
-    config = function()
-      vim.g.phpactor_php_bin = ryan_php
-      vim.api.nvim_create_autocmd("FileType", {
-        pattern = "php",
-        callback = function()
-          vim.keymap.set("n", "<leader>cu", "<cmd>PhpactorImportClass<cr>", { buffer = true })
-          vim.keymap.set("n", "<leader>cn", "<cmd>PhpactorContextMenu<cr>", { buffer = true })
-        end,
-      })
-    end,
-  },
-}
-EOF

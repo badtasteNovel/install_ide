@@ -30,6 +30,7 @@ alias nv='"/mnt/c/Program Files/Neovide/neovide.exe" --wsl --neovim-bin /usr/loc
 ```
 cd ~/.local/share/nvim/lazy/phpactor
 composer install
+```
 
-```
-```
+# 操作
+- lazygit: 以 2 3 切換工作區 ， ctrl+o 進行copy ，ctrl+c 進行離開
