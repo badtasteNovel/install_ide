@@ -7,6 +7,12 @@ cat >~/.config/nvim/plugin/custom-init.lua <<EOF
 vim.opt.foldmethod = "expr"
 vim.opt.foldexpr = "v:lua.vim.treesitter.foldexpr()"
 vim.opt.mouse = ""
+-- 1. 先設定 leader 鍵
+vim.g.mapleader = " "
+vim.g.maplocalleader = " "
+
+-- 2. 禁用一些可能衝突的默認行為
+vim.keymap.set({ 'n', 'v' }, '<Space>', '<Nop>', { silent = true })
 EOF
 
 echo "✅ custom Lua 配置完成"
