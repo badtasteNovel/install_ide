@@ -10,13 +10,13 @@ return {
     opts = {
       -- 這裡可以自定義快捷鍵，sa 是增加 (Add)，sd 是刪除 (Delete)，sr 是替換 (Replace)
       mappings = {
-        add = "sa", -- 增加圍繞
-        delete = "sd", -- 刪除圍繞
-        find = "sf", -- 尋找圍繞
-        find_left = "sF", -- 往左尋找
-        highlight = "sh", -- 高亮圍繞
-        replace = "sr", -- 替換圍繞
-        update_n_lines = "sn", -- 更新行數
+        add = "gza", -- 改為 gza (Add)
+        delete = "gzd", -- 改為 gzd (Delete)
+        find = "gzf",
+        find_left = "gzF",
+        highlight = "gzh",
+        replace = "gzr", -- 改為 gzr (Replace)
+        update_n_lines = "gzn",
       },
     },
     keys = {
