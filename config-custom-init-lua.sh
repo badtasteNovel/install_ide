@@ -6,6 +6,8 @@ mkdir -p ~/.config/nvim/plugin
 cat >~/.config/nvim/plugin/custom-init.lua <<EOF
 vim.opt.foldmethod = "expr"
 vim.opt.foldexpr = "v:lua.vim.treesitter.foldexpr()"
+-- 在 init.lua 加入，這會讓游標在 Normal 模式也變薄一點
+vim.opt.guicursor = "n-v-c:blinkon0-ver25-Cursor/lCursor"
 vim.opt.mouse = ""
 -- 1. 先設定 leader 鍵
 vim.g.mapleader = " "
