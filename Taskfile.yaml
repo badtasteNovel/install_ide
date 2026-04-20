@@ -15,8 +15,6 @@ tasks:
       - task: configure
       - bash config-php-lua.sh
       - task: keymaps-config
-      - bash install-imselect.sh
-      - bash config-im-select-lua.sh
 
   install-deps:
     desc: "Install required dependencies"

@@ -31,9 +31,16 @@ vim.api.nvim_create_autocmd("FileType", {
     end,
 })
 
--- 4. 其他常用的 Ryan 專屬快捷鍵
 keymap.set("n", "<leader>w", ":w<cr>", { desc = "Save" })     -- 空白鍵+w 快速存檔
 keymap.set("n", "<leader>q", ":q<cr>", { desc = "Quit" })     -- 空白鍵+q 快速退出
-
+-- 複製當前檔案所在目錄到剪貼簿
+vim.keymap.set("n", "<leader>fp", ":let @+ = expand('%:p:h')<CR>", { desc = "Copy current directory path" })
+vim.api.nvim_create_user_command("OpenHere", function()
+  local wsl_dir = vim.fn.expand("%:p:h")
+  local win_dir = vim.fn.system({"wslpath", "-w", wsl_dir})
+  -- 去掉換行符號
+  win_dir = string.gsub(win_dir, "\n", "")
+  vim.fn.jobstart({"explorer.exe", win_dir}, {detach=true})
+end, {})
 print("✅ 快捷鍵配置已更新！請重啟 Neovim 生效。")
 EOF
