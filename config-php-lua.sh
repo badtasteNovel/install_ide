@@ -45,6 +45,7 @@ return {
     end,
     config = function()
       vim.g.phpactor_php_bin = ryan_php
+      vim.keymap.set('n', '<leader>rn', vim.lsp.buf.rename, { desc = 'Rename' })
     end,
   },
 }
