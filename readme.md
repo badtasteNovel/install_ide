@@ -34,3 +34,13 @@ composer install
 
 # 操作
 - lazygit: 以 2 3 切換工作區 ， ctrl+o 進行copy ，ctrl+c 進行離開
+# html 操作
+za：切換 (Toggle) 摺疊狀態。如果現在是開的就收起來，關的就打開。
+
+zc：收起 (Close) 當前區塊。
+
+zo：展開 (Open) 當前區塊。
+
+zM：關閉所有 摺疊（收起全檔案的區塊）。
+
+zR：打開所有 摺疊。
