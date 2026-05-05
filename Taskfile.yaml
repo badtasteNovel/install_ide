@@ -11,9 +11,13 @@ tasks:
       - task: install-lazygit
       - task: install-neovim
       - task: install-lazyvim
-      - bash install-php-tools.sh
-      - task: configure
       - bash config-php-lua.sh
+      - bash config-telescope-lua.sh
+      - bash config-git-diff.sh 
+      - bash config-custom-init-lua.sh
+      - bash config-auto-tag-lua.sh
+      - bash autocmds.sh
+      - task: configure
       - task: keymaps-config
 
   install-deps:

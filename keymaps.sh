@@ -43,4 +43,4 @@ vim.api.nvim_create_user_command("OpenHere", function()
   vim.fn.jobstart({"explorer.exe", win_dir}, {detach=true})
 end, {})
 EOF
-echo("✅ 快捷鍵配置已更新！請重啟 Neovim 生效。")
+echo "✅ 快捷鍵配置已更新！請重啟 Neovim 生效。"
