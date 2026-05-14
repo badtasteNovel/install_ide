@@ -10,9 +10,6 @@ cat <<EOF | tee "$TARGET_FILE" >/dev/null
 vim.api.nvim_create_autocmd("FileType", {
   pattern = "php",
   callback = function()
-    -- 將 - 和 > 加入關鍵字定義
-    vim.opt_local.iskeyword:append("-")
-    vim.opt_local.iskeyword:append(">")
     vim.opt_local.iskeyword:append("$")
   end,
 })
