@@ -1,4 +1,6 @@
 version: '3'
+includes:
+  software: software/install-php.yaml
 tasks:
   keymaps-config:
     desc: "neovim keymaps install"
@@ -11,9 +13,14 @@ tasks:
       - task: install-lazygit
       - task: install-neovim
       - task: install-lazyvim
-      - bash install-php-tools.sh
-      - task: configure
+      - task: install-php-tools
       - bash config-php-lua.sh
+      - bash config-telescope-lua.sh
+      - bash config-git-diff.sh 
+      - bash config-custom-init-lua.sh
+      - bash config-auto-tag-lua.sh
+      - bash autocmds.sh
+      - task: configure
       - task: keymaps-config
 
   install-deps:
@@ -80,54 +87,49 @@ tasks:
 
   install-php-tools:
     desc: "Hard-fix Phpactor with bridge scripts"
+    silent: true
+    vars:
+      IMAGE: my-php-release:debian-bookworm  # 改成你的 image 名稱
     cmds:
-      # 建立橋接腳本，直接在生成時展開 DBX_PATH 避開執行期路徑問題
-      - mkdir -p ~/.local/bin
-      - |
-        DBX_PATH=$(which distrobox)
-        printf "#!/bin/bash\nexport DBX_CONTAINER_MANAGER=docker\n$DBX_PATH enter php-dev -- php \"\$@\"" > ~/.local/bin/php
-        printf "#!/bin/bash\nexport DBX_CONTAINER_MANAGER=docker\n$DBX_PATH enter php-dev -- composer \"\$@\"" > ~/.local/bin/composer
-        chmod +x ~/.local/bin/php ~/.local/bin/composer
-      # 寫入 Neovim 插件配置
+      - task: software:install-php
       - mkdir -p ~/.config/nvim/lua/plugins
       - |
-        cat > ~/.config/nvim/lua/plugins/php.lua << 'EOF'
-        return {
-          {
-            "phpactor/phpactor",
-            build = "DBX_CONTAINER_MANAGER=docker " .. vim.fn.expand("$HOME") .. "/.local/bin/composer install --no-dev -o",
-            ft = "php",
-            config = function()
-              vim.g.phpactor_php_bin = vim.fn.expand("$HOME") .. "/.local/bin/php"
-              if pcall(require, "notify") then
-                require("notify").setup({ timeout = 3000 })
-              end
-              vim.api.nvim_create_autocmd("FileType", {
-                pattern = "php",
-                callback = function()
-                  local opts = { buffer = true, silent = true }
-                  vim.keymap.set("n", "<leader>cu", "<cmd>PhpactorImportClass<cr>", { desc = "PHP Import Class", buffer = true })
-                  vim.keymap.set("n", "<leader>cn", "<cmd>PhpactorContextMenu<cr>", { desc = "Phpactor Menu", buffer = true })
-                end,
-              })
-            end,
-          },
-          {
-            "akinsho/bufferline.nvim",
-            opts = {
-              options = {
-                custom_filter = function(buf)
-                  return vim.bo[buf].buftype ~= "terminal"
-                end,
-              },
-            },
-          },
-        }
-        EOF 
+        printf '%s\n' \
+        'return {' \
+        '  {' \
+        '    "phpactor/phpactor",' \
+        '    build = "composer install --no-dev -o",' \
+        '    ft = "php",' \
+        '    config = function()' \
+        '      vim.g.phpactor_php_bin = "/usr/bin/php8.4"' \
+        '      if pcall(require, "notify") then' \
+        '        require("notify").setup({ timeout = 3000 })' \
+        '      end' \
+        '      vim.api.nvim_create_autocmd("FileType", {' \
+        '        pattern = "php",' \
+        '        callback = function()' \
+        '          local opts = { buffer = true, silent = true }' \
+        '          vim.keymap.set("n", "<leader>cu", "<cmd>PhpactorImportClass<cr>", { desc = "PHP Import Class", buffer = true })' \
+        '          vim.keymap.set("n", "<leader>cn", "<cmd>PhpactorContextMenu<cr>", { desc = "Phpactor Menu", buffer = true })' \
+        '        end,' \
+        '      })' \
+        '    end,' \
+        '  },' \
+        '  {' \
+        '    "akinsho/bufferline.nvim",' \
+        '    opts = {' \
+        '      options = {' \
+        '        custom_filter = function(buf)' \
+        '          return vim.bo[buf].buftype ~= "terminal"' \
+        '        end,' \
+        '      },' \
+        '    },' \
+        '  },' \
+        '}' \
+        > ~/.config/nvim/lua/plugins/php.lua
   clean:
     desc: "Reset all Neovim config"
     prompt: "This will delete all Neovim config. Are you sure?"
     cmds:
       - rm -rf ~/.config/nvim ~/.local/share/nvim ~/.local/state/nvim ~/.cache/nvim
       - echo "Cleared all config"
-
