@@ -12,6 +12,9 @@ This repo is a WSL-based Neovim + LazyVim setup toolkit. The scripts install Neo
 # Full install (deps → lazygit → neovim → lazyvim → php tools → configure)
 task
 
+# 依 meta.json 的 php-version 更新所有版本相關設定（apt 套件、nvim 設定、Docker base image）
+task update
+
 # Apply only keymaps config
 task keymaps-config
 
@@ -51,7 +54,9 @@ Each `config-*.sh` script embeds Lua code via heredoc and writes it to a specifi
 
 `config-php-lua.sh` reads `.env` for `PHP_DIR` (path to local PHP binary at `~/.local/share/php-bin`) and interpolates it into the Lua output.
 
-`base.Dockerfile` builds the PHP 8.4 base image (`my-php-base:8.4`) used for the distrobox-based PHP environment.
+`meta.json` (`{"php-version": "8.5"}`) is the single source of truth for the PHP version. `Taskfile.yaml` reads it into the `PHP_VERSION` var (via `jq`) and threads it through to: `software/install-php.yaml` (apt package names), `config-php-lua.sh` (`PHP_INI_SCAN_DIR`, passed as an env var), the `install-php-tools` task's generated `php.lua`, and `build-php-image` (Docker `--build-arg`). Bumping the PHP version means editing `meta.json` then running `task update` — do not hardcode a version number anywhere else.
+
+`base.Dockerfile` builds the PHP base image (`my-php-base:<version>`) used for the distrobox-based PHP environment; the version comes from `ARG PHP_VERSION`, supplied by `task build-php-image`.
 
 ## Key Notes
 

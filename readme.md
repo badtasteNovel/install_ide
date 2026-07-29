@@ -44,3 +44,5 @@ zo：展開 (Open) 當前區塊。
 zM：關閉所有 摺疊（收起全檔案的區塊）。
 
 zR：打開所有 摺疊。
+# php 操作
+<leader> rn : rename function with Reference

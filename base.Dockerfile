@@ -1,6 +1,7 @@
 # syntax=docker/dockerfile:1
-# image-name: my-php-base:8.4
-FROM php:8.4-fpm-bookworm
+# 版本由 meta.json 的 php-version 驅動，透過 `task build-php-image` 帶入 --build-arg
+ARG PHP_VERSION=8.5
+FROM php:${PHP_VERSION}-fpm-bookworm
 
 # 1. 確保基礎套件包含執行時期與編譯時期的 libpq
 RUN apt-get update && apt-get install -y --no-install-recommends \

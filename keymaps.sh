@@ -45,5 +45,9 @@ vim.api.nvim_create_user_command("OpenHere", function()
   win_dir = string.gsub(win_dir, "\n", "")
   vim.fn.jobstart({"explorer.exe", win_dir}, {detach=true})
 end, {})
+-- <leader>wL 把目前 window 推到最右邊
+keymap.set("n", "<leader>wL", "<C-w>L", { desc = "Move window to far right", noremap = true, silent = true })
+-- <leader>bd 刪除當前 buffer
+keymap.set("n", "<leader>bd", "<cmd>bd<cr>", { desc = "Delete current buffer", noremap = true, silent = true })
 EOF
 echo "✅ 快捷鍵配置已更新！請重啟 Neovim 生效。"

@@ -1,6 +1,12 @@
 version: '3'
+vars:
+  PHP_VERSION:
+    sh: jq -r '.["php-version"]' meta.json
 includes:
-  software: software/install-php.yaml
+  software:
+    taskfile: software/install-php.yaml
+    vars:
+      PHP_VERSION: '{{.PHP_VERSION}}'
 tasks:
   keymaps-config:
     desc: "neovim keymaps install"
@@ -14,7 +20,7 @@ tasks:
       - task: install-neovim
       - task: install-lazyvim
       - task: install-php-tools
-      - bash config-php-lua.sh
+      - PHP_VERSION={{.PHP_VERSION}} bash config-php-lua.sh
       - bash config-telescope-lua.sh
       - bash config-git-diff.sh 
       - bash config-custom-init-lua.sh
@@ -27,7 +33,7 @@ tasks:
     desc: "Install required dependencies"
     cmds:
       - sudo apt-get update -y
-      - sudo apt-get install -y curl git wget unzip ripgrep fd-find xclip
+      - sudo apt-get install -y curl git wget unzip ripgrep fd-find xclip jq
     status:
       - which git
       - which curl
@@ -101,7 +107,7 @@ tasks:
         '    build = "composer install --no-dev -o",' \
         '    ft = "php",' \
         '    config = function()' \
-        '      vim.g.phpactor_php_bin = "/usr/bin/php8.4"' \
+        '      vim.g.phpactor_php_bin = "/usr/bin/php{{.PHP_VERSION}}"' \
         '      if pcall(require, "notify") then' \
         '        require("notify").setup({ timeout = 3000 })' \
         '      end' \
@@ -127,6 +133,23 @@ tasks:
         '  },' \
         '}' \
         > ~/.config/nvim/lua/plugins/php.lua
+  update:
+    desc: "依 meta.json 的 php-version 更新所有版本相關設定（apt 套件、nvim 設定、Docker base image）"
+    cmds:
+      - task: software:install-php
+      - PHP_VERSION={{.PHP_VERSION}} bash config-php-lua.sh
+      - task: build-php-image
+      - echo "✅ 已更新至 PHP {{.PHP_VERSION}}"
+
+  build-php-image:
+    desc: "依 meta.json 的 php-version 重新建置並標記 PHP base image"
+    vars:
+      PHP_IMAGE:
+        sh: grep '^PHP_IMAGE=' .env | cut -d= -f2
+    cmds:
+      - docker build --build-arg PHP_VERSION={{.PHP_VERSION}} -f base.Dockerfile -t {{.PHP_IMAGE}}:{{.PHP_VERSION}} .
+      - echo "✅ Docker image {{.PHP_IMAGE}}:{{.PHP_VERSION}} 建置完成"
+
   clean:
     desc: "Reset all Neovim config"
     prompt: "This will delete all Neovim config. Are you sure?"
