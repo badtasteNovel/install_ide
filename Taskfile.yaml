@@ -12,6 +12,10 @@ tasks:
     desc: "neovim keymaps install"
     cmds:
       - bash keymaps.sh
+  go-config:
+    desc: "只套用 neovim 的 Go 設定（需先跑過 install-go）"
+    cmds:
+      - bash config-go-lua.sh
   default:
     desc: "Install Neovim + LazyVim"
     cmds:
@@ -19,12 +23,14 @@ tasks:
       - task: install-lazygit
       - task: install-neovim
       - task: install-lazyvim
+      - task: install-go
       - task: install-php-tools
       - PHP_VERSION={{.PHP_VERSION}} bash config-php-lua.sh
       - bash config-telescope-lua.sh
-      - bash config-git-diff.sh 
+      - bash config-git-diff.sh
       - bash config-custom-init-lua.sh
       - bash config-auto-tag-lua.sh
+      - bash config-go-lua.sh
       - bash autocmds.sh
       - task: configure
       - task: keymaps-config
@@ -71,6 +77,28 @@ tasks:
         rm -rf ~/.config/nvim/.git
     status:
       - test -f ~/.config/nvim/init.lua
+
+  install-go:
+    desc: "Install latest Go toolchain"
+    cmds:
+      - |
+        GO_VERSION=$(curl -sL "https://go.dev/VERSION?m=text" | head -1)
+        wget -q "https://go.dev/dl/${GO_VERSION}.linux-amd64.tar.gz" -O /tmp/go.tar.gz
+        sudo rm -rf /usr/local/go
+        sudo tar -C /usr/local -xzf /tmp/go.tar.gz
+        sudo ln -sf /usr/local/go/bin/go /usr/local/bin/go
+        sudo ln -sf /usr/local/go/bin/gofmt /usr/local/bin/gofmt
+        echo "Go installed $(go version)"
+      - |
+        # 讓 go install 出來的工具（gopls、go.nvim 依賴等）可被 shell 與 nvim 找到
+        grep -q 'GOPATH/bin' ~/.bashrc || cat >> ~/.bashrc << 'RC'
+
+        # Go
+        export PATH="$PATH:$(go env GOPATH)/bin"
+        RC
+    status:
+      - which go
+      - test -x /usr/local/go/bin/go
 
   configure:
     desc: "Configure encoding and IME"

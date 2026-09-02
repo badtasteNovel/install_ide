@@ -6,7 +6,7 @@ mkdir -p ~/.config/nvim/lua/plugins
 cat >~/.config/nvim/lua/plugins/telescope.lua <<EOF
 return {
 {
-    "echasnovski/mini.surround",
+    "nvim-mini/mini.surround",
     opts = {
       -- 這裡可以自定義快捷鍵，sa 是增加 (Add)，sd 是刪除 (Delete)，sr 是替換 (Replace)
       mappings = {

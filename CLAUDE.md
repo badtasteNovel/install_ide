@@ -18,8 +18,15 @@ task update
 # Apply only keymaps config
 task keymaps-config
 
+# Install Go toolchain to /usr/local/go (latest release)
+task install-go
+
+# Apply only the Neovim Go config (needs install-go first)
+task go-config
+
 # Run individual config scripts directly
 bash config-php-lua.sh        # requires .env to be present
+bash config-go-lua.sh
 bash config-telescope-lua.sh
 bash config-git-diff.sh
 bash config-mini-surround-lua.sh
@@ -44,11 +51,12 @@ Each `config-*.sh` script embeds Lua code via heredoc and writes it to a specifi
 | Script | Target file |
 |---|---|
 | `config-php-lua.sh` | `~/.config/nvim/lua/plugins/php.lua` |
+| `config-go-lua.sh` | `~/.config/nvim/lua/plugins/go.lua` (+ appends a `go-path-repair` block to `lua/config/options.lua`) |
 | `config-telescope-lua.sh` | `~/.config/nvim/lua/plugins/telescope.lua` |
 | `config-git-diff.sh` | `~/.config/nvim/lua/plugins/git-diff.lua` |
 | `config-mini-surround-lua.sh` | `~/.config/nvim/lua/plugins/telescope.lua` (overwrites!) |
 | `config-auto-tag-lua.sh` | `~/.config/nvim/lua/plugins/auto-tag.lua` |
-| `config-custom-init-lua.sh` | `~/.config/nvim/plugin/custom-init.lua` |
+| `config-custom-init-lua.sh` | `~/.config/nvim/plugin/custom-init.lua` (+ appends `mapleader` to `lua/config/options.lua`) |
 | `keymaps.sh` | `~/.config/nvim/lua/config/keymaps.lua` |
 | `autocmds.sh` | `~/.config/nvim/lua/config/autocmds.lua` |
 
@@ -61,6 +69,7 @@ Each `config-*.sh` script embeds Lua code via heredoc and writes it to a specifi
 ## Key Notes
 
 - `config-mini-surround-lua.sh` incorrectly writes to `telescope.lua` — it overwrites the Telescope config. If both are needed, the files must be merged manually.
+- **GUI-launched Neovim (Neovide via the `nv` alias / a Windows shortcut) does not source a login shell**, so its `$PATH` is missing `~/go/bin`, `/usr/local/go/bin`, etc. Without `go` on `$PATH`, `gopls` cannot load the workspace and every Go symbol shows as `undefined` (opening `nvim` from a WSL terminal works fine — that's the tell). `config-go-lua.sh` appends a `go-path-repair` block to `lua/config/options.lua` that prepends the common Go bin dirs before lazy.nvim loads. If Go moves elsewhere, add the dir to the `candidates` list in that block.
 - After running any config script, Neovim must be restarted (or `:source` the relevant file) for changes to take effect.
 - The Neovide alias for WSL is: `alias nv='"/mnt/c/Program Files/Neovide/neovide.exe" --wsl --neovim-bin /usr/local/bin/nvim'`
 - To escape terminal mode in Neovim: `Ctrl+\ Ctrl+N`
